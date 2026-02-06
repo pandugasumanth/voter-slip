@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Voter Information Slip</title>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #f2f2f2;
+}
+
+.box {
+  width: 340px;
+  margin: 40px auto;
+  background: #fff;
+  border: 1px solid #000;
+  padding: 12px;
+}
+
+h3 {
+  text-align: center;
+  margin: 6px 0;
+}
+
+select, input, button {
+  width: 100%;
+  padding: 6px;
+  margin: 5px 0;
+}
+
+p {
+  font-size: 13px;
+  margin: 4px 0;
+}
+
+.footer {
+  font-size: 10px;
+  text-align: center;
+  margin-top: 8px;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .box, .box * {
+    visibility: visible;
+  }
+  .box {
+    position: absolute;
+    left: 0;
+    top: 0;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+  <h3>Voter Information Slip</h3>
+
+  <!-- 🔽 SEARCH TYPE DROPDOWN -->
+  <select id="searchType">
+    <option value="epic_no">Search by EPIC No</option>
+    <option value="name">Search by Name</option>
+    <option value="house_No">Search by House No</option>
+    <option value="mobile_no">Search by Mobile No</option>
+  </select>
+
+  <!-- 🔍 SEARCH INPUT -->
+  <input id="search" placeholder="Enter value">
+
+  <button onclick="findVoter()">Search</button>
+
+  <div id="result"></div>
+
+  <button onclick="window.print()">Print Slip</button>
+
+  <div class="footer">
+    This is NOT an official voter slip.<br>
+    Please carry valid ID for voting.
+  </div>
+</div>
+
+<script>
+let voters = [];
+
+/* LOAD DATA */
+fetch("https://opensheet.elk.sh/1xfIMsplZ_b4X4VI6D0AKUK5sQnVPRPFFgOhgJZUgAMc/Sheet1!A1:Z")
+  .then(res => res.json())
+  .then(data => voters = data);
+
+/* NORMALIZE INPUT */
+function normalize(val) {
+  return String(val || "")
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, "");
+}
+
+/* SEARCH LOGIC */
+function findVoter() {
+  const type = document.getElementById("searchType").value;
+  const input = normalize(document.getElementById("search").value);
+
+  const voter = voters.find(v =>
+    normalize(v[type]) === input
+  );
+
+  document.getElementById("result").innerHTML = voter
+    ? `
+      <p><b>Name:</b> ${voter.name}</p>
+      <p><b>Relation:</b> ${voter.relation_name}</p>
+      <p><b>House No:</b> ${voter.house_No}</p>
+      <p><b>PS Location:</b> ${voter.ps_location}</p>
+      <p><b>Serial No:</b> ${voter.serial_no}</p>
+      <p><b>Age:</b> ${voter.age}</p>
+      <p><b>Gender:</b> ${voter.gender}</p>
+    `
+    : "<p><b>No record found</b></p>";
+}
+</script>
+
+</body>
+</html>

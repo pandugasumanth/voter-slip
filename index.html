@@ -3,36 +3,38 @@
 <head>
 <meta charset="UTF-8">
 <title>Voter Information Slip</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-/* ---------- BASE ---------- */
+/* ======= GLOBAL ======= */
 body {
   font-family: Arial, sans-serif;
   margin: 0;
-  min-height: 100vh;
-
-  /* 🔥 BACKGROUND IMAGE */
-  background-image: url("background.jpg");
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
 }
 
-/* MOBILE BACKGROUND FIX */
-@media (max-width: 600px) {
-  body {
-    background-attachment: scroll;
+/* ======= BACKGROUND (LANDING) ======= */
+.page {
+  min-height: 100vh;
+  background: url("background.jpg") center / cover no-repeat;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 12px;
+}
+
+@media (max-width: 768px) {
+  .page {
+    background: url("background-mobile.jpg") center / cover no-repeat;
   }
 }
 
-/* ---------- CARD ---------- */
-.box {
-  width: 320px;
-  margin: 20px auto;
-  background: rgba(255, 255, 255, 0.95);
+/* ======= SEARCH CARD ======= */
+.search-card {
+  background: #ffffffee;
+  width: 100%;
+  max-width: 380px;
   border: 1px solid #000;
-  padding: 12px;
+  padding: 10px;
 }
 
 h3 {
@@ -43,57 +45,79 @@ h3 {
 select, input, button {
   width: 100%;
   padding: 6px;
-  margin: 5px 0;
-}
-
-button {
-  cursor: pointer;
-}
-
-p {
-  font-size: 13px;
   margin: 4px 0;
+  font-size: 13px;
 }
 
-.footer {
-  font-size: 10px;
-  text-align: center;
-  margin-top: 8px;
+/* ======= RESULTS ======= */
+.results {
+  margin-top: 10px;
 }
 
-/* ---------- RESULT CARDS ---------- */
-.result-card {
-  border: 1px dashed #000;
+/* ======= SLIP ======= */
+.slip {
+  border: 1px solid #000;
   padding: 6px;
-  margin: 6px 0;
+  margin-bottom: 10px;
+  background: #fff;
 }
 
-.result-card label {
+/* ======= HEADER ======= */
+.slip-header {
+  text-align: center;
+  border-bottom: 1px solid #000;
+  margin-bottom: 6px;
+  padding-bottom: 4px;
+}
+
+.slip-header .top {
   font-size: 12px;
+  font-weight: bold;
 }
 
-/* ---------- PRINT (3-INCH PAPER) ---------- */
-@media print {
-  body {
-    background: none !important;
-    margin: 0;
-  }
+.slip-header .candidate {
+  font-size: 13px;
+  font-weight: bold;
+}
 
+.slip-header .sub {
+  font-size: 10px;
+}
+
+/* ======= DATA ======= */
+.row {
+  font-size: 11px;
+  margin: 2px 0;
+}
+
+/* ======= FOOTER ======= */
+.footer {
+  font-size: 9px;
+  text-align: center;
+  margin-top: 6px;
+}
+
+/* ======= PRINT (2 INCH) ======= */
+@media print {
   body * {
     visibility: hidden;
   }
 
-  .print-area, .print-area * {
+  .slip, .slip * {
     visibility: visible;
   }
 
-  .print-area {
-    width: 72mm; /* 3-inch */
+  .slip {
     position: absolute;
     left: 0;
     top: 0;
-    padding: 5mm;
+    width: 58mm;
     border: none;
+  }
+
+  .search-card,
+  button {
+    display: none;
   }
 }
 </style>
@@ -101,31 +125,24 @@ p {
 
 <body>
 
-<div class="box">
-  <h3>Voter Information Slip</h3>
+<div class="page">
 
-  <!-- SEARCH TYPE -->
-  <select id="searchType">
-    <option value="epic_no">Search by EPIC No</option>
-    <option value="name">Search by Name</option>
-    <option value="house_No">Search by House No</option>
-    <option value="mobile_no">Search by Mobile No</option>
-  </select>
+  <div class="search-card">
+    <h3>Voter Information Slip</h3>
 
-  <!-- SEARCH INPUT -->
-  <input id="search" placeholder="Enter value">
+    <select id="searchType">
+      <option value="epic_no">Search by EPIC No</option>
+      <option value="name">Search by Name</option>
+      <option value="house_No">Search by House No</option>
+      <option value="mobile_no">Search by Mobile No</option>
+    </select>
 
-  <button onclick="findVoter()">Search</button>
+    <input id="search" placeholder="Enter value">
+    <button onclick="findVoter()">Search</button>
 
-  <!-- RESULTS -->
-  <div id="result"></div>
-
-  <button onclick="printSelected()">Print Selected</button>
-
-  <div class="footer">
-    This is NOT an official voter slip.<br>
-    Please carry valid ID for voting.
+    <div id="result" class="results"></div>
   </div>
+
 </div>
 
 <script>
@@ -137,64 +154,64 @@ fetch("https://opensheet.elk.sh/1xfIMsplZ_b4X4VI6D0AKUK5sQnVPRPFFgOhgJZUgAMc/She
   .then(data => voters = data);
 
 /* NORMALIZE */
-function normalize(val) {
-  return String(val || "")
-    .trim()
-    .toUpperCase()
-    .replace(/\s+/g, "");
+function normalize(v) {
+  return String(v || "").trim().toUpperCase().replace(/\s+/g, "");
 }
 
 /* SEARCH */
 function findVoter() {
   const type = document.getElementById("searchType").value;
   const input = normalize(document.getElementById("search").value);
-  const resultBox = document.getElementById("result");
+  const box = document.getElementById("result");
+  box.innerHTML = "";
 
   const matches = voters.filter(v =>
-    normalize(v[type]).includes(input)
+    normalize(v[type]) === input
   );
 
-  if (matches.length === 0) {
-    resultBox.innerHTML = "<p><b>No record found</b></p>";
+  if (!matches.length) {
+    box.innerHTML = "<p>No record found</p>";
     return;
   }
 
-  resultBox.innerHTML = matches.map((v, i) => `
-    <div class="result-card">
-      <label>
-        <input type="checkbox" class="print-check" value="${i}">
-        <b>${v.name}</b>
-      </label>
-      <p>Relation: ${v.relation_name}</p>
-      <p>House No: ${v.house_No}</p>
-      <p>PS: ${v.ps_location}</p>
-      <p>Serial: ${v.serial_no}</p>
-      <p>Age: ${v.age} | Gender: ${v.gender}</p>
-    </div>
-  `).join("");
+  matches.forEach(v => {
+    box.innerHTML += `
+      <div class="slip">
+        <div class="slip-header">
+          <div class="top">✋ Vote for Congress</div>
+          <div class="candidate">Sarilla Raja Kumari</div>
+          <div class="sub">
+            52 Division Candidate<br>
+            Ballot Serial No: 6
+          </div>
+        </div>
+
+        <div class="row"><b>Voter ID:</b> ${v.epic_no || ""}</div>
+        <div class="row"><b>Name:</b> ${v.name || ""}</div>
+        <div class="row"><b>${v.relation || ""}:</b> ${v.relation_name || ""}</div>
+        <div class="row"><b>House No:</b> ${v.house_No || ""}</div>
+        <div class="row"><b>PS:</b> ${v.ps_location || ""}</div>
+        <div class="row"><b>Serial:</b> ${v.serial_no || ""}</div>
+        <div class="row"><b>Age / Gender:</b> ${v.age || ""} | ${v.gender || ""}</div>
+
+        <button onclick="printOne(this)">Print</button>
+
+        <div class="footer">
+          This is NOT an official voter slip.<br>
+          Please carry valid ID for voting.
+        </div>
+      </div>
+    `;
+  });
 }
 
-/* PRINT SELECTED */
-function printSelected() {
-  const checks = document.querySelectorAll(".print-check:checked");
-  if (checks.length === 0) {
-    alert("Select at least one voter");
-    return;
-  }
-
-  let html = "";
-  checks.forEach(c => {
-    const card = c.closest(".result-card").cloneNode(true);
-    card.querySelector("input").remove();
-    html += `<div class="print-area">${card.innerHTML}</div>`;
-  });
-
-  const win = window.open("", "", "width=300,height=600");
-  win.document.write(`<html><body>${html}</body></html>`);
-  win.document.close();
-  win.focus();
-  win.print();
-  win.close();
+/* PRINT SINGLE */
+function printOne(btn) {
+  const slip = btn.closest(".slip");
+  const original = document.body.innerHTML;
+  document.body.innerHTML = slip.outerHTML;
+  window.print();
+  document.body.innerHTML = original;
 }
 </script>
 

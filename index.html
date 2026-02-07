@@ -6,118 +6,109 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-/* ======= GLOBAL ======= */
+/* ===== SCREEN ===== */
 body {
   font-family: Arial, sans-serif;
+  background: url("background.jpg") center/cover no-repeat;
   margin: 0;
-}
-
-/* ======= BACKGROUND (LANDING) ======= */
-.page {
-  min-height: 100vh;
-  background: url("background.jpg") center / cover no-repeat;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 12px;
-}
-
-@media (max-width: 768px) {
-  .page {
-    background: url("background.jpg") center / cover no-repeat;
-  }
-}
-
-/* ======= SEARCH CARD ======= */
-.search-card {
-  background: #ffffffee;
-  width: 100%;
-  max-width: 380px;
-  border: 1px solid #000;
   padding: 10px;
 }
 
-h3 {
-  text-align: center;
-  margin: 6px 0;
+.container {
+  max-width: 640px;
+  margin: auto;
+  background: rgba(255,255,255,0.97);
+  border: 1px solid #000;
+  padding: 10px;
 }
 
 select, input, button {
   width: 100%;
   padding: 6px;
-  margin: 4px 0;
-  font-size: 13px;
+  margin: 5px 0;
+  font-size: 14px;
 }
 
-/* ======= RESULTS ======= */
 .results {
   margin-top: 10px;
 }
 
-/* ======= SLIP ======= */
+/* ===== SLIP (LANDSCAPE) ===== */
 .slip {
-  border: 1px solid #000;
-  padding: 6px;
+  display: flex;
+  border: 1px dashed #000;
   margin-bottom: 10px;
-  background: #fff;
-}
-
-/* ======= HEADER ======= */
-.slip-header {
-  text-align: center;
-  border-bottom: 1px solid #000;
-  margin-bottom: 6px;
-  padding-bottom: 4px;
-}
-
-.slip-header .top {
   font-size: 12px;
-  font-weight: bold;
 }
 
-.slip-header .candidate {
-  font-size: 13px;
-  font-weight: bold;
-}
-
-.slip-header .sub {
-  font-size: 10px;
-}
-
-/* ======= DATA ======= */
-.row {
-  font-size: 11px;
-  margin: 2px 0;
-}
-
-/* ======= FOOTER ======= */
-.footer {
-  font-size: 9px;
+/* LEFT SIDE – CANDIDATE */
+.left {
+  width: 35%;
+  border-right: 1px solid #000;
   text-align: center;
-  margin-top: 6px;
+  padding: 8px;
 }
 
-/* ======= PRINT (2 INCH) ======= */
+.left img {
+  width: 70px;
+  margin-bottom: 4px;
+}
+
+.left .title {
+  font-weight: bold;
+  font-size: 13px;
+}
+
+.left .sub {
+  font-size: 11px;
+}
+
+/* RIGHT SIDE – VOTER */
+.right {
+  width: 65%;
+  padding: 8px;
+}
+
+.right p {
+  margin: 3px 0;
+}
+
+.print-btn {
+  margin-top: 6px;
+  padding: 6px;
+  font-size: 13px;
+}
+
+/* ===== PRINT (80mm ROLL) ===== */
 @media print {
+  @page {
+    size: 80mm auto;
+    margin: 0;
+  }
+
   body * {
-    visibility: hidden;
+    visibility: hidden !important;
   }
 
-  .slip, .slip * {
-    visibility: visible;
+  .print-area,
+  .print-area * {
+    visibility: visible !important;
   }
 
-  .slip {
+  .print-area {
     position: absolute;
     left: 0;
     top: 0;
-    width: 58mm;
-    border: none;
+    width: 80mm;
+    padding: 4mm;
   }
 
-  .search-card,
   button {
-    display: none;
+    display: none !important;
+  }
+
+  body {
+    background: none !important;
   }
 }
 </style>
@@ -125,23 +116,20 @@ select, input, button {
 
 <body>
 
-<div class="page">
+<div class="container">
 
-  <div class="search-card">
-    <h3>Voter Information Slip</h3>
+  <!-- SEARCH -->
+  <select id="searchType">
+    <option value="epic_no">Search by EPIC No</option>
+    <option value="name">Search by Name</option>
+    <option value="house_No">Search by House No</option>
+    <option value="mobile_no">Search by Mobile No</option>
+  </select>
 
-    <select id="searchType">
-      <option value="epic_no">Search by EPIC No</option>
-      <option value="name">Search by Name</option>
-      <option value="house_No">Search by House No</option>
-      <option value="mobile_no">Search by Mobile No</option>
-    </select>
+  <input id="search" placeholder="Enter value">
+  <button onclick="findVoter()">Search</button>
 
-    <input id="search" placeholder="Enter value">
-    <button onclick="findVoter()">Search</button>
-
-    <div id="result" class="results"></div>
-  </div>
+  <div id="result" class="results"></div>
 
 </div>
 
@@ -155,63 +143,71 @@ fetch("https://opensheet.elk.sh/1xfIMsplZ_b4X4VI6D0AKUK5sQnVPRPFFgOhgJZUgAMc/She
 
 /* NORMALIZE */
 function normalize(v) {
-  return String(v || "").trim().toUpperCase().replace(/\s+/g, "");
+  return String(v || "")
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, "");
 }
 
 /* SEARCH */
 function findVoter() {
   const type = document.getElementById("searchType").value;
   const input = normalize(document.getElementById("search").value);
-  const box = document.getElementById("result");
-  box.innerHTML = "";
+  const result = document.getElementById("result");
+
+  result.innerHTML = "";
 
   const matches = voters.filter(v =>
-    normalize(v[type]) === input
+    normalize(v[type]).includes(input)
   );
 
   if (!matches.length) {
-    box.innerHTML = "<p>No record found</p>";
+    result.innerHTML = "<b>No record found</b>";
     return;
   }
 
   matches.forEach(v => {
-    box.innerHTML += `
-      <div class="slip">
-        <div class="slip-header">
-          <div class="top">✋ Vote for Congress</div>
-          <div class="candidate">Sarilla Raja Kumari</div>
-          <div class="sub">
-            52 Division Candidate<br>
-            Ballot Serial No: 6
-          </div>
-        </div>
+    const slip = document.createElement("div");
+    slip.className = "slip";
 
-        <div class="row"><b>Voter ID:</b> ${v.epic_no || ""}</div>
-        <div class="row"><b>Name:</b> ${v.name || ""}</div>
-        <div class="row"><b>${v.relation || ""}:</b> ${v.relation_name || ""}</div>
-        <div class="row"><b>House No:</b> ${v.house_No || ""}</div>
-        <div class="row"><b>PS:</b> ${v.ps_location || ""}</div>
-        <div class="row"><b>Serial:</b> ${v.serial_no || ""}</div>
-        <div class="row"><b>Age / Gender:</b> ${v.age || ""} | ${v.gender || ""}</div>
-
-        <button onclick="printOne(this)">Print</button>
-
-        <div class="footer">
-          This is NOT an official voter slip.<br>
-          Please carry valid ID for voting.
+    slip.innerHTML = `
+      <div class="left">
+        <img src="hand.png">
+        <div class="title">Vote for Congress ✋</div>
+        <div class="sub">
+          Sarilla Raja Kumari<br>
+          52 Division<br>
+          Ballot No: <b>6</b>
         </div>
       </div>
+
+      <div class="right">
+        <p><b>Voter ID:</b> ${v.epic_no || ""}</p>
+        <p><b>Name:</b> ${v.name || ""}</p>
+        <p><b>${v.relation || ""}:</b> ${v.relation_name || ""}</p>
+        <p><b>House No:</b> ${v.house_No || ""}</p>
+        <p><b>PS:</b> ${v.ps_location || ""}</p>
+        <p><b>Serial:</b> ${v.serial_no || ""}</p>
+        <p><b>Age / Gender:</b> ${v.age || ""} | ${v.gender || ""}</p>
+
+        <button class="print-btn" onclick="printSlip(this)">Print</button>
+      </div>
     `;
+
+    result.appendChild(slip);
   });
 }
 
-/* PRINT SINGLE */
-function printOne(btn) {
-  const slip = btn.closest(".slip");
-  const original = document.body.innerHTML;
-  document.body.innerHTML = slip.outerHTML;
-  window.print();
-  document.body.innerHTML = original;
+/* MOBILE SAFE PRINT */
+function printSlip(btn) {
+  document.querySelectorAll(".print-area")
+    .forEach(e => e.classList.remove("print-area"));
+
+  btn.closest(".slip").classList.add("print-area");
+
+  setTimeout(() => {
+    window.print();
+  }, 300);
 }
 </script>
 
